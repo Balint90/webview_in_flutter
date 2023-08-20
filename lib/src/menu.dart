@@ -1,5 +1,26 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+const String kExamplePage = '''
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Load file or HTML string example</title>
+</head>
+<body>
+
+<h1>Local demo page</h1>
+<p>
+ This is an example page used to demonstrate how to load a local file or HTML
+ string using the <a href="https://pub.dev/packages/webview_flutter">Flutter
+ webview</a> plugin.
+</p>
+
+</body>
+</html>
+''';
 
 enum _MenuOptions {
   navigationDelegate,
@@ -10,6 +31,10 @@ enum _MenuOptions {
   addCookie,
   setCookie,
   removeCookie,
+  loadBackgroundSlider,
+  loadMovieApp,
+  loadLocalFile,
+  loadHtmlString,
 }
 
 class Menu extends StatefulWidget {
@@ -70,6 +95,18 @@ req.send();''');
           case _MenuOptions.removeCookie:
             await _onRemoveCookie(widget.controller);
             break;
+          case _MenuOptions.loadBackgroundSlider:
+            await _onLoadFlutterBackgroundSlider(widget.controller, context);
+            break;
+          case _MenuOptions.loadMovieApp:
+            await _onLoadFlutterMovieApp(widget.controller, context);
+            break;
+          case _MenuOptions.loadLocalFile:
+            await _onLoadLocalFileExample(widget.controller, context);
+            break;
+          case _MenuOptions.loadHtmlString:
+            await _onLoadHtmlStringExample(widget.controller, context);
+            break;
         }
       },
       itemBuilder: (context) => [
@@ -104,6 +141,22 @@ req.send();''');
         const PopupMenuItem<_MenuOptions>(
           value: _MenuOptions.removeCookie,
           child: Text('Remove cookie'),
+        ),
+        const PopupMenuItem<_MenuOptions>(
+          value: _MenuOptions.loadBackgroundSlider,
+          child: Text('Load BackGround Slider'),
+        ),
+        const PopupMenuItem<_MenuOptions>(
+          value: _MenuOptions.loadMovieApp,
+          child: Text('Load Movie App'),
+        ),
+        const PopupMenuItem<_MenuOptions>(
+          value: _MenuOptions.loadHtmlString,
+          child: Text('Load HTML string'),
+        ),
+        const PopupMenuItem<_MenuOptions>(
+          value: _MenuOptions.loadLocalFile,
+          child: Text('Load local file'),
         ),
       ],
     );
@@ -167,5 +220,37 @@ req.send();''');
         content: Text('Custom cookie removed.'),
       ),
     );
+  }
+
+  Future<void> _onLoadFlutterBackgroundSlider(
+      WebViewController controller, BuildContext context) async {
+    await controller.loadFlutterAsset('assets/background-slider/index.html');
+  }
+
+  Future<void> _onLoadFlutterMovieApp(
+      WebViewController controller, BuildContext context) async {
+    await controller.loadFlutterAsset('assets/movie-app/index.html');
+  }
+
+  Future<void> _onLoadLocalFileExample(
+      WebViewController controller, BuildContext context) async {
+    final String pathToIndex = await _prepareLocalFile();
+
+    await controller.loadFile(pathToIndex);
+  }
+
+  static Future<String> _prepareLocalFile() async {
+    final String tmpDir = (await getTemporaryDirectory()).path;
+    final File indexFile = File('$tmpDir/www/index.html');
+
+    await Directory('$tmpDir/www').create(recursive: true);
+    await indexFile.writeAsString(kExamplePage);
+
+    return indexFile.path;
+  }
+
+  Future<void> _onLoadHtmlStringExample(
+      WebViewController controller, BuildContext context) async {
+    await controller.loadHtmlString(kExamplePage);
   }
 }
